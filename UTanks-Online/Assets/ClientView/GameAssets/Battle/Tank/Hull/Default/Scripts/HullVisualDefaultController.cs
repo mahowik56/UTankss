@@ -81,12 +81,6 @@ namespace SecuredSpace.Battle.Tank.Hull
 
                 var hullMesh = hullInstance.GetComponent<MeshFilter>()?.sharedMesh;
 
-                var playerHullModel = hullInstance.GetComponent<MeshFilter>()?.sharedMesh;
-
-
-                var playerHullModel = hullInstance.GetComponent<MeshFilter>()?.sharedMesh;
-
-
                 if(!hullVContr.Preview)
                 {
                     for (int i = 1; i < hullVContr.HullAngleColliderHeader.transform.childCount; i++)
@@ -95,22 +89,6 @@ namespace SecuredSpace.Battle.Tank.Hull
                         Destroy(hullVContr.HullBalanceCollider.transform.GetChild(i).gameObject);
                     hullVContr.HullBalanceCollider.GetComponents<Collider>().ForEach(x => Destroy(x));
                     hullVContr.TankBoundsObject.GetComponents<Collider>().ForEach(x => Destroy(x));
-
-
-                    hullVContr.GetOrAddComponent<MeshCollider>().sharedMesh = hullMesh;
-                    hullVContr.parentTankManager.hullManager.GetOrAddComponent<MeshCollider>().sharedMesh = hullMesh;
-                    hullVContr.parentTankManager.hullManager.GetOrAddComponent<MeshFilter>().mesh = hullMesh;
-
-                    hullVContr.HullVisibleModel.GetOrAddComponent<MeshFilter>().mesh = hullMesh;
-                    hullVContr.HullVisibleModel.GetOrAddComponent<MeshCollider>().sharedMesh = hullMesh;
-                    hullVContr.GetOrAddComponent<MeshCollider>().sharedMesh = playerHullModel;
-                    hullVContr.parentTankManager.hullManager.GetOrAddComponent<MeshCollider>().sharedMesh = playerHullModel;
-                    hullVContr.parentTankManager.hullManager.GetOrAddComponent<MeshFilter>().mesh = playerHullModel;
-
-                    hullVContr.HullVisibleModel.GetOrAddComponent<MeshFilter>().mesh = playerHullModel;
-                    hullVContr.HullVisibleModel.GetOrAddComponent<MeshCollider>().sharedMesh = playerHullModel;
-
-
                     var boundsCollider = hullVContr.gameObject.AddComponent(typeof(BoxCollider)) as BoxCollider;
                     boundsCollider.isTrigger = true;
                     hullVContr.parentTankManager.hullManager.chassisManager.MainBoundsCollider = boundsCollider;
@@ -121,13 +99,6 @@ namespace SecuredSpace.Battle.Tank.Hull
                     var boundBox = hullVContr.TankBoundsObject.AddComponent<BoxCollider>();
                     boundBox.size = hullMesh.bounds.size;
                     boundBox.center = hullMesh.bounds.center;
-
-                    hullVContr.TankFrictionCollidersObject.GetComponent<MeshFilter>().mesh = playerHullModel;
-                    hullVContr.TankFrictionCollidersObject.GetComponent<MeshCollider>().sharedMesh = playerHullModel;
-                    hullVContr.TankBoundsObject.GetComponent<MeshFilter>().mesh = playerHullModel;
-                    var boundBox = hullVContr.TankBoundsObject.AddComponent<BoxCollider>();
-                    boundBox.size = playerHullModel.bounds.size;
-                    boundBox.center = playerHullModel.bounds.center;
 
                     boundBox.size = new Vector3(boundBox.size.x, boundBox.size.y / 2, boundBox.size.z);
                     var balanceBox = hullVContr.HullBalanceCollider.AddComponent<BoxCollider>();
