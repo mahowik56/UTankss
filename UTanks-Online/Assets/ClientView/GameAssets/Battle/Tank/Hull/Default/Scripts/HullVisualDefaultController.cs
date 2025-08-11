@@ -2,6 +2,7 @@ using SecuredSpace.ClientControl.DBResources;
 using SecuredSpace.ClientControl.Model;
 using SecuredSpace.ClientControl.Services;
 using SecuredSpace.Important.TPhysics;
+using SecuredSpace.Important.Raven;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -77,11 +78,11 @@ namespace SecuredSpace.Battle.Tank.Hull
                 hullInstance.transform.localRotation = Quaternion.identity;
                 hullVContr.HullVisibleModel = hullInstance;
 
+
                 var playerHullModel = hullInstance.GetComponent<MeshFilter>()?.sharedMesh;
 
 
-                hullVContr.GetOrAddComponent<MeshFilter>().mesh = Instantiate(playerHullModel);
-                
+                var playerHullModel = hullInstance.GetComponent<MeshFilter>()?.sharedMesh;
 
                 if(!hullVContr.Preview)
                 {
@@ -92,22 +93,22 @@ namespace SecuredSpace.Battle.Tank.Hull
                     hullVContr.HullBalanceCollider.GetComponents<Collider>().ForEach(x => Destroy(x));
                     hullVContr.TankBoundsObject.GetComponents<Collider>().ForEach(x => Destroy(x));
 
-                    hullVContr.GetOrAddComponent<MeshCollider>().sharedMesh = hullVContr.GetComponent<MeshFilter>().mesh;
-                    hullVContr.parentTankManager.hullManager.GetOrAddComponent<MeshCollider>().sharedMesh = hullVContr.GetComponent<MeshFilter>().mesh;
-                    hullVContr.parentTankManager.hullManager.GetOrAddComponent<MeshFilter>().mesh = hullVContr.GetComponent<MeshFilter>().mesh;
+                    hullVContr.GetOrAddComponent<MeshCollider>().sharedMesh = playerHullModel;
+                    hullVContr.parentTankManager.hullManager.GetOrAddComponent<MeshCollider>().sharedMesh = playerHullModel;
+                    hullVContr.parentTankManager.hullManager.GetOrAddComponent<MeshFilter>().mesh = playerHullModel;
 
-                    hullVContr.HullVisibleModel.GetOrAddComponent<MeshFilter>().mesh = hullVContr.GetComponent<MeshFilter>().mesh;
-                    hullVContr.HullVisibleModel.GetOrAddComponent<MeshCollider>().sharedMesh = hullVContr.GetComponent<MeshFilter>().mesh;
+                    hullVContr.HullVisibleModel.GetOrAddComponent<MeshFilter>().mesh = playerHullModel;
+                    hullVContr.HullVisibleModel.GetOrAddComponent<MeshCollider>().sharedMesh = playerHullModel;
 
                     var boundsCollider = hullVContr.gameObject.AddComponent(typeof(BoxCollider)) as BoxCollider;
                     boundsCollider.isTrigger = true;
                     hullVContr.parentTankManager.hullManager.chassisManager.MainBoundsCollider = boundsCollider;
-                    hullVContr.TankFrictionCollidersObject.GetComponent<MeshFilter>().mesh = hullVContr.GetComponent<MeshFilter>().mesh;
-                    hullVContr.TankFrictionCollidersObject.GetComponent<MeshCollider>().sharedMesh = hullVContr.GetComponent<MeshFilter>().mesh;
-                    hullVContr.TankBoundsObject.GetComponent<MeshFilter>().mesh = hullVContr.GetComponent<MeshFilter>().mesh;
+                    hullVContr.TankFrictionCollidersObject.GetComponent<MeshFilter>().mesh = playerHullModel;
+                    hullVContr.TankFrictionCollidersObject.GetComponent<MeshCollider>().sharedMesh = playerHullModel;
+                    hullVContr.TankBoundsObject.GetComponent<MeshFilter>().mesh = playerHullModel;
                     var boundBox = hullVContr.TankBoundsObject.AddComponent<BoxCollider>();
-                    boundBox.size = hullVContr.GetComponent<MeshFilter>().mesh.bounds.size;
-                    boundBox.center = hullVContr.GetComponent<MeshFilter>().mesh.bounds.center;
+                    boundBox.size = playerHullModel.bounds.size;
+                    boundBox.center = playerHullModel.bounds.center;
                     boundBox.size = new Vector3(boundBox.size.x, boundBox.size.y / 2, boundBox.size.z);
                     var balanceBox = hullVContr.HullBalanceCollider.AddComponent<BoxCollider>();
 
@@ -155,6 +156,10 @@ namespace SecuredSpace.Battle.Tank.Hull
                 var allBones = hullInstance.GetComponentsInChildren<Transform>();
                 hullVContr.TrackBones = allBones.Where(t => t.name.ToLower().Contains("track")).ToList();
                 hullVContr.WheelBones = allBones.Where(t => t.name.ToLower().Contains("wheel")).ToList();
+
+                hullVContr.TrackBoneBasePositions = hullVContr.TrackBones.ToDictionary(b => b, b => b.localPosition);
+
+
                 #endregion
             }
 #if AggressiveLog
@@ -207,7 +212,7 @@ namespace SecuredSpace.Battle.Tank.Hull
 
         public static new void SetGhostModeShared(IHullVisualController hullVisualController, bool enable)
         {
-            hullVisualController.GetComponent<MeshRenderer>().materials.ForEach(x =>
+            hullVisualController.HullVisibleModel.GetComponent<MeshRenderer>().materials.ForEach(x =>
             {
                 if (enable)
                 {
@@ -219,7 +224,7 @@ namespace SecuredSpace.Battle.Tank.Hull
                     x.shader = hullVisualController.HullSkinResources.GetElement<Shader>("Shader");
                 }
             });
-            hullVisualController.GetComponent<ColormapScript>().Setup(hullVisualController.colormapSkinConfig, hullVisualController.ColormapResources);
+            hullVisualController.HullVisibleModel.GetComponent<ColormapScript>().Setup(hullVisualController.colormapSkinConfig, hullVisualController.ColormapResources);
         }
 
         public override void SetTemperature(float temperature)
@@ -273,6 +278,25 @@ namespace SecuredSpace.Battle.Tank.Hull
             {
                 wheel.Rotate(Vector3.right, MoveMomentX * Time.deltaTime * 100f, Space.Self);
             }
+
+
+            var chassisManager = hullVisualController.parentTankManager?.hullManager?.chassisManager;
+            if (chassisManager != null)
+            {
+                var trackComponent = chassisManager.chassisNode.track;
+                foreach (var track in hullVisualController.TrackBones)
+                {
+                    var basePos = hullVisualController.TrackBoneBasePositions.ContainsKey(track) ? hullVisualController.TrackBoneBasePositions[track] : track.localPosition;
+                    var name = track.name.ToLower();
+                    var indexStr = new string(name.Where(char.IsDigit).ToArray());
+                    int idx = 0;
+                    int.TryParse(indexStr, out idx);
+                    idx = Mathf.Max(idx - 1, 0);
+                    var ray = name.Contains("_l") ? trackComponent.LeftTrack.rays[idx] : trackComponent.RightTrack.rays[idx];
+                    basePos.y = hullVisualController.TrackBoneBasePositions[track].y + ray.compression;
+                    track.localPosition = basePos;
+                }
+
             foreach (var track in hullVisualController.TrackBones)
             {
                 var pos = track.localPosition;
