@@ -271,15 +271,11 @@ namespace SecuredSpace.Battle.Tank.Hull
 
         public static new void MoveAnimationShared(IHullVisualController hullVisualController, float MoveMomentX, float MoveMomentY, int trackgroup)
         {
-            var TrackTextureOffset = hullVisualController.TrackTextureOffset;
-            TrackTextureOffset.x += Mathf.Lerp(TrackTextureOffset.x, MoveMomentX * Time.fixedDeltaTime, Time.fixedDeltaTime);
-            // TrackTextureOffset += new Vector2(chassisNode.chassis.EffectiveMoveAxis * 0.001f, 0f);
             var playedAudio = hullVisualController.hullAudio.audioManager.GetNowPlayingAudioName();
             if (MoveMomentX == 0)
             {
                 if (playedAudio.Length == 0 || (playedAudio.Length > 0 && playedAudio[0].IndexOf("idle") == -1))
                 {
-                    //hullVisualController.hullAudio.audioManager.StopAll();
                     hullVisualController.hullAudio.audioManager.Fade("audio_move");
                     hullVisualController.hullAudio.audioManager.Fade("audio_move_start");
                     hullVisualController.hullAudio.audioManager.Stop("audio_engineidle");
@@ -298,48 +294,6 @@ namespace SecuredSpace.Battle.Tank.Hull
                     hullVisualController.hullAudio.audioManager.PlayBlock(new List<string> { "audio_move_start", "audio_move" });
                 }
             }
-            foreach (var wheel in hullVisualController.WheelBones)
-            {
-                wheel.Rotate(Vector3.right, MoveMomentX * Time.deltaTime * 100f, Space.Self);
-            }
-
-
-
-
-            var chassisManager = hullVisualController.parentTankManager?.hullManager?.chassisManager;
-            if (chassisManager != null)
-            {
-                var trackComponent = chassisManager.chassisNode.track;
-                foreach (var track in hullVisualController.TrackBones)
-                {
-                    var basePos = hullVisualController.TrackBoneBasePositions.ContainsKey(track) ? hullVisualController.TrackBoneBasePositions[track] : track.localPosition;
-                    var name = track.name.ToLower();
-                    var indexStr = new string(name.Where(char.IsDigit).ToArray());
-                    int idx = 0;
-                    int.TryParse(indexStr, out idx);
-                    idx = Mathf.Max(idx - 1, 0);
-                    var ray = name.Contains("_l") ? trackComponent.LeftTrack.rays[idx] : trackComponent.RightTrack.rays[idx];
-                    basePos.y = hullVisualController.TrackBoneBasePositions[track].y + ray.compression;
-                    track.localPosition = basePos;
-                }
-
-
-            foreach (var track in hullVisualController.TrackBones)
-            {
-                var pos = track.localPosition;
-                pos.y = Mathf.Lerp(pos.y, MoveMomentY, Time.deltaTime);
-                track.localPosition = pos;
-
-            }
-            try
-            {
-                hullVisualController.HullVisibleModel.GetComponent<MeshRenderer>().materials[trackgroup].SetTextureOffset("_Lightmap", TrackTextureOffset);
-                hullVisualController.HullVisibleModel.GetComponent<MeshRenderer>().materials[trackgroup].SetTextureOffset("_Details", TrackTextureOffset);
-            }
-            catch { }
-            if (TrackTextureOffset.x > 10f || TrackTextureOffset.x < -10f)
-                TrackTextureOffset.x = 0f;
-            hullVisualController.TrackTextureOffset = TrackTextureOffset;
         }
     }
 }

@@ -1,8 +1,6 @@
 using SecuredSpace.ClientControl.DBResources;
 using SecuredSpace.ClientControl.Model;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UTanksClient.ECS.Types;
 
@@ -10,15 +8,9 @@ namespace SecuredSpace.Battle.Tank.Hull
 {
     public class HullVisual20Controller : IHullVisualController
     {
-        List<Material> trackgroup = new List<Material>();
         public override void BuildVisual(VisualizableEquipment visualizableEquipment, ItemCard eraItemCard)
         {
             HullVisualDefaultController.BuildVisualShared<HullVisual20Controller>(visualizableEquipment, eraItemCard, this);
-            var newMaterialArray = HullVisibleModel.GetComponent<MeshRenderer>().materials.ToList();
-            trackgroup.Add(HullVisibleModel.GetComponent<MeshRenderer>().materials.Last());
-            newMaterialArray.Add(Instantiate(HullVisibleModel.GetComponent<MeshRenderer>().materials.Last()));
-            HullVisibleModel.GetComponent<MeshRenderer>().materials = newMaterialArray.ToArray();
-            trackgroup.Add(HullVisibleModel.GetComponent<MeshRenderer>().materials.Last());
         }
 
         public override void BuildPreviewVisual(VisualizableEquipment visualizableEquipment, ItemCard eraItemCard)
@@ -30,11 +22,6 @@ namespace SecuredSpace.Battle.Tank.Hull
             }
             this.HullVisibleModel = this.gameObject;
             HullVisualDefaultController.BuildVisualShared<HullVisual20Controller>(visualizableEquipment, eraItemCard, this);
-            var newMaterialArray = HullVisibleModel.GetComponent<MeshRenderer>().materials.ToList();
-            trackgroup.Add(HullVisibleModel.GetComponent<MeshRenderer>().materials.Last());
-            newMaterialArray.Add(Instantiate(HullVisibleModel.GetComponent<MeshRenderer>().materials.Last()));
-            HullVisibleModel.GetComponent<MeshRenderer>().materials = newMaterialArray.ToArray();
-            trackgroup.Add(HullVisibleModel.GetComponent<MeshRenderer>().materials.Last());
         }
 
         public static new T BuildVisualShared<T>(VisualizableEquipment visualizableEquipment, ItemCard eraItemCard, T tankVisualController) where T : ITankVisualController
@@ -99,22 +86,6 @@ namespace SecuredSpace.Battle.Tank.Hull
                 }
             }
 
-            var TrackTextureOffset = hullVisualController.TrackTextureOffset;
-            var hullVisualController20 = hullVisualController as HullVisual20Controller;
-            TrackTextureOffset.x += Mathf.Lerp(TrackTextureOffset.x, MoveMomentX * Time.fixedDeltaTime, Time.fixedDeltaTime);
-            // TrackTextureOffset += new Vector2(chassisNode.chassis.EffectiveMoveAxis * 0.001f, 0f);
-            try
-            {
-                hullVisualController20.trackgroup.ForEach(x => {
-                    x.SetTextureOffset("_Lightmap", TrackTextureOffset);
-                    x.SetTextureOffset("_Details", TrackTextureOffset);
-                });
-                
-            }
-            catch { }
-            if (TrackTextureOffset.x > 10f || TrackTextureOffset.x < -10f)
-                TrackTextureOffset.x = 0f;
-            hullVisualController.TrackTextureOffset = TrackTextureOffset;
         }
     }
 }
