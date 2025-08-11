@@ -78,6 +78,10 @@ namespace SecuredSpace.Battle.Tank.Hull
                 hullInstance.transform.localRotation = Quaternion.identity;
                 hullVContr.HullVisibleModel = hullInstance;
 
+
+                var playerHullModel = hullInstance.GetComponent<MeshFilter>()?.sharedMesh;
+
+
                 var playerHullModel = hullInstance.GetComponent<MeshFilter>()?.sharedMesh;
 
                 if(!hullVContr.Preview)
@@ -152,7 +156,10 @@ namespace SecuredSpace.Battle.Tank.Hull
                 var allBones = hullInstance.GetComponentsInChildren<Transform>();
                 hullVContr.TrackBones = allBones.Where(t => t.name.ToLower().Contains("track")).ToList();
                 hullVContr.WheelBones = allBones.Where(t => t.name.ToLower().Contains("wheel")).ToList();
+
                 hullVContr.TrackBoneBasePositions = hullVContr.TrackBones.ToDictionary(b => b, b => b.localPosition);
+
+
                 #endregion
             }
 #if AggressiveLog
@@ -272,6 +279,7 @@ namespace SecuredSpace.Battle.Tank.Hull
                 wheel.Rotate(Vector3.right, MoveMomentX * Time.deltaTime * 100f, Space.Self);
             }
 
+
             var chassisManager = hullVisualController.parentTankManager?.hullManager?.chassisManager;
             if (chassisManager != null)
             {
@@ -288,6 +296,12 @@ namespace SecuredSpace.Battle.Tank.Hull
                     basePos.y = hullVisualController.TrackBoneBasePositions[track].y + ray.compression;
                     track.localPosition = basePos;
                 }
+
+            foreach (var track in hullVisualController.TrackBones)
+            {
+                var pos = track.localPosition;
+                pos.y = Mathf.Lerp(pos.y, MoveMomentY, Time.deltaTime);
+                track.localPosition = pos;
             }
             try
             {
