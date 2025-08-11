@@ -20,8 +20,10 @@ namespace SecuredSpace.Battle.Tank.Hull
         {
             var emptyGO = new GameObject();
             parentTankManager = tankManager;
-            tankManager.TankBoundsObject.GetComponent<BoxCollider>().center = this.GetComponent<MeshFilter>().mesh.bounds.center;
-            tankManager.TankBoundsObject.GetComponent<BoxCollider>().size = this.GetComponent<MeshFilter>().mesh.bounds.size;
+
+            var hullMesh = parentTankManager.HullVisibleModel.GetComponent<MeshFilter>().sharedMesh;
+            tankManager.TankBoundsObject.GetComponent<BoxCollider>().center = hullMesh.bounds.center;
+            tankManager.TankBoundsObject.GetComponent<BoxCollider>().size = hullMesh.bounds.size;
             tankManager.TankBoundsObject.GetComponent<BoxCollider>().material = BoundMaterial;
             var hullComponent = player.GetComponent<HullComponent>(HullComponent.Id);
 
@@ -95,7 +97,7 @@ namespace SecuredSpace.Battle.Tank.Hull
 
             #region Init aim colliders
 
-            var tankMesh = tankManager.Hull.GetComponent<MeshFilter>();
+            var tankMesh = parentTankManager.HullVisibleModel.GetComponent<MeshFilter>();
             parentTankManager.HullAngleColliderHeader.transform.localPosition = new Vector3(parentTankManager.HullAngleColliderHeader.transform.localPosition.x, tankMesh.sharedMesh.bounds.size.y / 2, parentTankManager.HullAngleColliderHeader.transform.localPosition.z);
 
 
