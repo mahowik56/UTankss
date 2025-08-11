@@ -26,6 +26,9 @@ namespace SecuredSpace.ClientControl.Model
 
         public Vector3 localMountPoint = Vector3.zero;
         public Vector2 TrackTextureOffset = Vector2.zero;
+        public List<Transform> TrackBones = new List<Transform>();
+        public List<Transform> WheelBones = new List<Transform>();
+        public Dictionary<Transform, Vector3> TrackBoneBasePositions = new Dictionary<Transform, Vector3>();
         public AudioAnchor hullAudio => parentTankManager.hullAudioSource;
 
         private GameObject CacheTankFrictionCollidersObject;
