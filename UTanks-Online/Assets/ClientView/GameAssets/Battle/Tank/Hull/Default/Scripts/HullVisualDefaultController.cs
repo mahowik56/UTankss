@@ -68,8 +68,16 @@ namespace SecuredSpace.Battle.Tank.Hull
 
                 #region buildVisualTank
 
-                var playerHullFullModel = hullVContr.HullSkinResources.GetElement<GameObject>("model");
-                var playerHullModel = playerHullFullModel.GetComponent<MeshFilter>().sharedMesh;
+                var hullPrefab = hullVContr.HullSkinResources.GetElement<GameObject>("model");
+                hullVContr.HullPrefab = hullPrefab;
+                if (hullVContr.HullVisibleModel != null && hullVContr.HullVisibleModel != hullVContr.gameObject)
+                    GameObject.Destroy(hullVContr.HullVisibleModel);
+                var hullInstance = GameObject.Instantiate(hullPrefab, hullVContr.transform);
+                hullInstance.transform.localPosition = Vector3.zero;
+                hullInstance.transform.localRotation = Quaternion.identity;
+                hullVContr.HullVisibleModel = hullInstance;
+
+                var playerHullModel = hullInstance.GetComponent<MeshFilter>()?.sharedMesh;
 
 
                 hullVContr.GetOrAddComponent<MeshFilter>().mesh = Instantiate(playerHullModel);
@@ -137,14 +145,16 @@ namespace SecuredSpace.Battle.Tank.Hull
 
                 hullVContr.HullVisibleModel.GetOrAddComponent<ColormapScript>().Setup(hullVContr.colormapSkinConfig, hullVContr.ColormapResources, true);
 
-                var hullResPrefab = playerHullFullModel;
-                for (int i = 0; i < hullResPrefab.transform.childCount; i++)
+                for (int i = 0; i < hullInstance.transform.childCount; i++)
                 {
-                    if (hullResPrefab.transform.GetChild(i).name.Contains("mount"))
+                    if (hullInstance.transform.GetChild(i).name.Contains("mount"))
                     {
-                        hullVContr.localMountPoint = hullResPrefab.transform.GetChild(i).transform.localPosition;
+                        hullVContr.localMountPoint = hullInstance.transform.GetChild(i).transform.localPosition;
                     }
                 }
+                var allBones = hullInstance.GetComponentsInChildren<Transform>();
+                hullVContr.TrackBones = allBones.Where(t => t.name.ToLower().Contains("track")).ToList();
+                hullVContr.WheelBones = allBones.Where(t => t.name.ToLower().Contains("wheel")).ToList();
                 #endregion
             }
 #if AggressiveLog
@@ -258,6 +268,16 @@ namespace SecuredSpace.Battle.Tank.Hull
                     hullVisualController.hullAudio.audioManager.Stop("audio_move_start");
                     hullVisualController.hullAudio.audioManager.PlayBlock(new List<string> { "audio_move_start", "audio_move" });
                 }
+            }
+            foreach (var wheel in hullVisualController.WheelBones)
+            {
+                wheel.Rotate(Vector3.right, MoveMomentX * Time.deltaTime * 100f, Space.Self);
+            }
+            foreach (var track in hullVisualController.TrackBones)
+            {
+                var pos = track.localPosition;
+                pos.y = Mathf.Lerp(pos.y, MoveMomentY, Time.deltaTime);
+                track.localPosition = pos;
             }
             try
             {
